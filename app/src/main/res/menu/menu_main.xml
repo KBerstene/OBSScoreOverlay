@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto" >
+    <item android:id="@+id/action_reset_scores"
+        android:icon="@android:drawable/ic_menu_revert"
+        android:title="@string/reset_player_scores"
+        app:showAsAction="ifRoom"/>
+
+    <item android:id="@+id/action_reset_game"
+        android:icon="@android:drawable/ic_menu_close_clear_cancel"
+        android:title="@string/reset_game_text"
+        app:showAsAction="ifRoom"/>
+
+    <item android:id="@+id/action_edit_states"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="@string/edit_game_states_text"
+        app:showAsAction="ifRoom" />
+
+    <item android:id="@+id/action_change_path"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="@string/save_location"
+        app:showAsAction="never" />
+
+</menu>

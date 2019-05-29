@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">OBS Score Overlay</string>
+    <string name="playerName">Player</string>
+    <string name="decrease_score">Decrease Score</string>
+    <string name="zero">0</string>
+    <string name="increase_score">Increase Score</string>
+    <string name="army_icon">⚔️</string>
+    <string name="road_icon">🛤️</string>
+    <string name="reset_road">Reset Road</string>
+    <string name="reset_army">Reset Army</string>
+    <string name="reset_player_scores">Reset Player Scores</string>
+    <string name="reset_game_text">Reset Entire Game</string>
+    <string name="server_path_hint">192.168.1.100/share/folder/path</string>
+    <string name="server_path_prompt">Enter a path to a writable server SMB path. Do not include the smb:// prefix.</string>
+    <string name="save_location">Save Location</string>
+    <string name="edit_game_states_text">Edit Game States</string>
+    <string name="remove_state">Remove state</string>
+    <string name="state_name_text_hint">Name</string>
+</resources>

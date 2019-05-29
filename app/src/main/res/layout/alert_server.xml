@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="?dialogPreferredPadding">
+
+    <TextView android:id="@+id/serverPromptText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/server_path_prompt"
+        style="@android:style/TextAppearance.DeviceDefault.Medium" />
+
+    <EditText android:id="@+id/serverPathEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/server_path_hint"
+        android:autofillHints="false"
+        android:inputType="textUri" />
+
+</LinearLayout>
