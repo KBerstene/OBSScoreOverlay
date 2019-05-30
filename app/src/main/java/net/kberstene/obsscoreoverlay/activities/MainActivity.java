@@ -3,6 +3,7 @@ package net.kberstene.obsscoreoverlay.activities;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -65,8 +66,11 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_change_path:
                 ServerSettings.showServerPrompt(this);
                 return true;
-            case R.id.action_edit_states:
-                gameState.showStateEditPrompt(this);
+            case R.id.action_edit_player_states:
+                gameState.showPlayerStateEditPrompt(this);
+                return true;
+            case R.id.action_edit_universal_states:
+                gameState.showUniversalStateEditPrompt(this);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -83,6 +87,10 @@ public class MainActivity extends AppCompatActivity {
 
     public LinearLayout getPlayerLayoutContainer() {
         return findViewById(R.id.playerLayoutContainer);
+    }
+
+    public ConstraintLayout getUniversalStateContainer() {
+        return findViewById(R.id.universalStateContainer);
     }
 
 }

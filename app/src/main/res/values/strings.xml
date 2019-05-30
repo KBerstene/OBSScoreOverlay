@@ -13,7 +13,8 @@
     <string name="server_path_hint">192.168.1.100/share/folder/path</string>
     <string name="server_path_prompt">Enter a path to a writable server SMB path. Do not include the smb:// prefix.</string>
     <string name="save_location">Save Location</string>
-    <string name="edit_game_states_text">Edit Game States</string>
+    <string name="edit_player_states_text">Edit Player States</string>
+    <string name="edit_universal_states_text">Edit Game States</string>
     <string name="remove_state">Remove state</string>
     <string name="state_name_text_hint">Name</string>
 </resources>

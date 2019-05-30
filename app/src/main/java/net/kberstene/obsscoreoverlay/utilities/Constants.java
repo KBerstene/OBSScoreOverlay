@@ -20,4 +20,8 @@ public class Constants {
     public final static String PLAYER_BUNDLE_KEY_BOOLEAN_STATES = "player_bundle_key_boolean_states";
     public final static String PLAYER_BUNDLE_KEY_STATE_NAMES = "player_bundle_key_state_names";
     public final static String PLAYER_BUNDLE_KEY_SERVER_PATH = "player_bundle_key_server_path";
+
+    public final static String PREF_KEY_UNIVERSAL_STATE_COUNT = "universal_state_count";
+    public final static String PREF_KEY_UNIVERSAL_STATE_NAME = "universal_state_name_";
+    public final static String PREF_KEY_UNIVERSAL_STATE_STATUS = "universal_state_status_";
 }

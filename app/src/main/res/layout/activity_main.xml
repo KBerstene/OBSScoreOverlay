@@ -22,4 +22,14 @@
         android:id="@+id/playerLayoutContainer"
         android:orientation="vertical" />
 
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/universalStateContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="20dp" />
 </LinearLayout>

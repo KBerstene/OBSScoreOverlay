@@ -11,10 +11,15 @@
         android:title="@string/reset_game_text"
         app:showAsAction="ifRoom"/>
 
-    <item android:id="@+id/action_edit_states"
+    <item android:id="@+id/action_edit_player_states"
         android:icon="@android:drawable/ic_menu_edit"
-        android:title="@string/edit_game_states_text"
-        app:showAsAction="ifRoom" />
+        android:title="@string/edit_player_states_text"
+        app:showAsAction="never" />
+
+    <item android:id="@+id/action_edit_universal_states"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="@string/edit_universal_states_text"
+        app:showAsAction="never" />
 
     <item android:id="@+id/action_change_path"
         android:icon="@android:drawable/ic_menu_save"

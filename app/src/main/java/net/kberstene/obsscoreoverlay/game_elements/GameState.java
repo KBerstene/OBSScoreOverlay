@@ -10,6 +10,7 @@ import android.support.constraint.ConstraintSet;
 import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.CheckBox;
@@ -25,13 +26,13 @@ import net.kberstene.obsscoreoverlay.activities.MainActivity;
 import net.kberstene.obsscoreoverlay.utilities.Constants;
 import net.kberstene.obsscoreoverlay.utilities.PlayerStateButtonGroup;
 
-import java.lang.System;
 import java.util.ArrayList;
 
 public class GameState {
     private ArrayList<Player> players;
+    private ArrayList<UniversalState> universalStates;
     private ArrayList<PlayerStateButtonGroup> booleanStateButtonGroups;
-    private String[] booleanStateNames;
+    private ArrayList<String> booleanStateNames;
     private ArrayList<Boolean> booleanStateTypes;
     private int booleanStateCount;
 
@@ -44,23 +45,41 @@ public class GameState {
 
         // Make sure the container is empty
         ((MainActivity)context).getPlayerLayoutContainer().removeAllViews();
+        ((MainActivity)context).getUniversalStateContainer().removeAllViews();
 
-        // Init boolean state info
+        // Init default boolean state info
         booleanStateButtonGroups = new ArrayList<>();
         booleanStateTypes = new ArrayList<>();
         booleanStateCount = 0;
-        booleanStateNames = new String[booleanStateCount];
+        booleanStateNames = new ArrayList<>();
 
+        // Init default universal state info
+        universalStates = new ArrayList<>();
+        int universalStateCount = 0;
+        ArrayList<String> universalStateNames = new ArrayList<>();
+        ArrayList<Boolean> universalStateStatus = new ArrayList<>();
+
+        // Init default player info
         int playerCount = 4;
 
         if (!fullGameReset) {
             playerCount = prefs.getInt(Constants.PREF_KEY_PLAYER_COUNT, 4);
             booleanStateCount = prefs.getInt(Constants.PREF_KEY_GAME_BOOLEAN_STATE_COUNT, 2);
-            booleanStateNames = new String[booleanStateCount];
-            
+
             for (int i = 0; i < booleanStateCount; i++) {
                 booleanStateTypes.add(prefs.getBoolean(Constants.PREF_KEY_GAME_BOOLEAN_STATE_TYPE + i, false));
             }
+
+            // Get saved universal state info
+            universalStateCount = prefs.getInt(Constants.PREF_KEY_UNIVERSAL_STATE_COUNT, 0);
+
+
+            for (int i = 0; i < universalStateCount; i ++) {
+                universalStateNames.add(prefs.getString(Constants.PREF_KEY_UNIVERSAL_STATE_NAME + i, ""));
+                universalStateStatus.add(prefs.getBoolean(Constants.PREF_KEY_UNIVERSAL_STATE_STATUS + i, false));
+            }
+
+            initUniversalStates(context, universalStateNames, universalStateStatus);
         }
         
         String[] playerNames = new String[playerCount];
@@ -88,7 +107,7 @@ public class GameState {
 
             // Retrieve state types and names
             for (int i = 0; i < booleanStateCount; i++) {
-                booleanStateNames[i] = prefs.getString(Constants.PREF_KEY_GAME_BOOLEAN_STATE_NAME + i, booleanStateTypes.get(i) ? "X" : "Y");
+                booleanStateNames.add(prefs.getString(Constants.PREF_KEY_GAME_BOOLEAN_STATE_NAME + i, booleanStateTypes.get(i) ? "X" : "Y"));
             }
         } else {
             // We still have to set strings
@@ -97,7 +116,7 @@ public class GameState {
             }
 
             for (int i = 0; i < booleanStateCount; i++) {
-                booleanStateNames[i] = booleanStateTypes.get(i) ? "X" : "Y";
+                booleanStateNames.add(booleanStateTypes.get(i) ? "X" : "Y");
             }
         }
 
@@ -151,7 +170,7 @@ public class GameState {
             stateHeader.setId(View.generateViewId());
 
             // Set text of header to state name/icon
-            stateHeader.setText(booleanStateNames[i]);
+            stateHeader.setText(booleanStateNames.get(i));
 
             // Add the TextView to the layout
             headerLayout.addView(stateHeader);
@@ -173,7 +192,7 @@ public class GameState {
             stateHeader.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    showResetPrompt(context, "Reset all players for:" + "\n" + booleanStateNames[buttonIndex], new DialogInterface.OnClickListener() {
+                    showResetPrompt(context, "Reset all players for:" + "\n" + booleanStateNames.get(buttonIndex), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             booleanStateButtonGroups.get(buttonIndex).clearCheck();
@@ -204,7 +223,7 @@ public class GameState {
             playerInfo.putString(Constants.PLAYER_BUNDLE_KEY_PLAYER_NAME, playerNames[i]);
             playerInfo.putInt(Constants.PLAYER_BUNDLE_KEY_STARTING_SCORE, startingScores[i]);
             playerInfo.putBooleanArray(Constants.PLAYER_BUNDLE_KEY_BOOLEAN_STATES, playerBooleanStates);
-            playerInfo.putStringArray(Constants.PLAYER_BUNDLE_KEY_STATE_NAMES, booleanStateNames);
+            playerInfo.putStringArray(Constants.PLAYER_BUNDLE_KEY_STATE_NAMES, booleanStateNames.toArray(new String[0]));
 
             // Create new Player
             Player newPlayer = new Player(playerInfo);
@@ -217,10 +236,73 @@ public class GameState {
         }
     }
 
+    private void initUniversalStates(Context context, ArrayList<String> stateNames, ArrayList<Boolean> states) {
+        int rightmostViewId = ConstraintSet.PARENT_ID;
+
+        for (int i = 0; i < stateNames.size(); i++) {
+            // Create the label to pass to the new state object
+            TextView stateLabel = new TextView(context);
+            stateLabel.setId(View.generateViewId());
+
+            // Create the check box
+            CheckBox checkBox = new CheckBox(context);
+            checkBox.setId(View.generateViewId());
+
+            // Create the new state object
+            final UniversalState newState = new UniversalState(stateNames.get(i), i + 1, stateLabel);
+            newState.setState(states.get(i));
+
+            // Tie the check box to the state object
+            checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    newState.setState(isChecked);
+                }
+            });
+
+            // Add the check box and label to the layout
+            ConstraintLayout stateContainer = ((MainActivity)context).getUniversalStateContainer();
+            stateContainer.addView(stateLabel);
+            stateContainer.addView(checkBox);
+
+            // Add constraints in the layout
+            ConstraintSet constraints = new ConstraintSet();
+            constraints.clone(stateContainer);
+
+                // Constrain the label horizontally
+            constraints.setHorizontalChainStyle(stateLabel.getId(), ConstraintSet.CHAIN_SPREAD);
+            constraints.addToHorizontalChain(stateLabel.getId(), rightmostViewId, ConstraintSet.PARENT_ID);
+                // Constrain the check box to the label
+            constraints.connect(checkBox.getId(), ConstraintSet.LEFT, stateLabel.getId(), ConstraintSet.LEFT);
+            constraints.connect(checkBox.getId(), ConstraintSet.RIGHT, stateLabel.getId(), ConstraintSet.RIGHT);
+                // Constrain the check box and label together vertically
+            constraints.connect(stateLabel.getId(), ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+            constraints.connect(stateLabel.getId(), ConstraintSet.BOTTOM, checkBox.getId(), ConstraintSet.TOP);
+            constraints.connect(checkBox.getId(), ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+
+            // Apply constraints
+            constraints.applyTo(stateContainer);
+
+            // Set the new right-most view ID
+            rightmostViewId = stateLabel.getId();
+
+            // Add state to list
+            universalStates.add(newState);
+        }
+    }
+
     public void saveGameState(Context context) {
         SharedPreferences.Editor prefs = context.getSharedPreferences(Constants.PREF_FILENAME, Context.MODE_PRIVATE).edit();
 
-        // Store game states
+        // Store universal game states
+        prefs.putInt(Constants.PREF_KEY_UNIVERSAL_STATE_COUNT, universalStates.size());
+        Log.w("SAVING STATES", "Number of universal states: " + universalStates.size());
+        for (int i = 0; i < universalStates.size(); i++) {
+            prefs.putBoolean(Constants.PREF_KEY_UNIVERSAL_STATE_STATUS + i, universalStates.get(i).getState());
+            prefs.putString(Constants.PREF_KEY_UNIVERSAL_STATE_NAME + i, universalStates.get(i).getName());
+        }
+
+        // Store player states
         prefs.putInt(Constants.PREF_KEY_PLAYER_COUNT, players.size());
         prefs.putInt(Constants.PREF_KEY_GAME_BOOLEAN_STATE_COUNT, booleanStateCount);
         for (int i = 0; i < booleanStateCount; i++)
@@ -228,7 +310,7 @@ public class GameState {
 
         // Store state names
         for (int i = 0; i < booleanStateCount; i++)
-            prefs.putString(Constants.PREF_KEY_GAME_BOOLEAN_STATE_NAME + i, booleanStateNames[i]);
+            prefs.putString(Constants.PREF_KEY_GAME_BOOLEAN_STATE_NAME + i, booleanStateNames.get(i));
 
         // Store player states
         for (int i = 0; i < players.size(); i++) {
@@ -317,23 +399,205 @@ public class GameState {
         }
     }
 
-    public void showStateEditPrompt(final Context context) {
+    private AlertDialog createStateEditPrompt(final Context context, final ArrayList stateGroup) {
         final LinearLayout alertStateContainer = (LinearLayout) ((Activity) context).getLayoutInflater().inflate(R.layout.alert_state_container, null, false);
 
         AlertDialog prompt = new AlertDialog.Builder(context)
                 .setCancelable(true)
                 .setNegativeButton("Close", null)
-                .setNeutralButton("Add new state", new DialogInterface.OnClickListener() {
+                .setView(alertStateContainer)
+                .create();
+
+        if (stateGroup.size() > 0) {
+            { // Create headers - scope limit local variables
+                // Don't attach to root so it returns us the layout and not the root layout
+                ConstraintLayout stateHeaderLayout = (ConstraintLayout) ((Activity) context).getLayoutInflater().inflate(R.layout.alert_states, alertStateContainer, false);
+
+                // Add the view to the container
+                alertStateContainer.addView(stateHeaderLayout);
+
+                // Set existing views as invisible
+                View stateEditText = stateHeaderLayout.findViewById(R.id.statePromptEditText);
+                View stateSwitch = stateHeaderLayout.findViewById(R.id.statePromptSwitch);
+                View removeButton = stateHeaderLayout.findViewById(R.id.statePromptRemoveButton);
+                stateEditText.setVisibility(View.INVISIBLE);
+                stateSwitch.setVisibility((stateGroup.get(0) instanceof PlayerStateButtonGroup) ? View.INVISIBLE : View.GONE);
+                removeButton.setVisibility(View.INVISIBLE);
+
+                // Create new text views for labels
+                TextView stateLabel = new TextView(context);
+                TextView removeLabel = new TextView(context);
+                TextView switchLabel = new TextView(context);
+                stateLabel.setId(View.generateViewId());
+                removeLabel.setId(View.generateViewId());
+                stateLabel.setText("State Label");
+                removeLabel.setText("Remove");
+
+                // Add the labels to the layout
+                stateHeaderLayout.addView(stateLabel);
+                stateHeaderLayout.addView(removeLabel);
+
+                // Add switch label if necessary
+                if (stateGroup.get(0) instanceof PlayerStateButtonGroup) {
+                    switchLabel.setId(View.generateViewId());
+                    switchLabel.setText("Single/Multi");
+                    stateHeaderLayout.addView(switchLabel);
+                }
+
+                // Constrain the labels
+                ConstraintSet constraints = new ConstraintSet();
+                constraints.clone(stateHeaderLayout);
+
+                constraints.connect(stateLabel.getId(), ConstraintSet.TOP, stateEditText.getId(), ConstraintSet.TOP);
+                constraints.connect(stateLabel.getId(), ConstraintSet.BOTTOM, stateEditText.getId(), ConstraintSet.BOTTOM);
+                constraints.connect(stateLabel.getId(), ConstraintSet.LEFT, stateEditText.getId(), ConstraintSet.LEFT);
+                constraints.connect(stateLabel.getId(), ConstraintSet.RIGHT, stateEditText.getId(), ConstraintSet.RIGHT);
+
+                constraints.connect(removeLabel.getId(), ConstraintSet.TOP, removeButton.getId(), ConstraintSet.TOP);
+                constraints.connect(removeLabel.getId(), ConstraintSet.BOTTOM, removeButton.getId(), ConstraintSet.BOTTOM);
+                constraints.connect(removeLabel.getId(), ConstraintSet.LEFT, removeButton.getId(), ConstraintSet.LEFT);
+                constraints.connect(removeLabel.getId(), ConstraintSet.RIGHT, removeButton.getId(), ConstraintSet.RIGHT);
+
+                if (stateGroup.get(0) instanceof PlayerStateButtonGroup) {
+                    constraints.connect(switchLabel.getId(), ConstraintSet.TOP, stateSwitch.getId(), ConstraintSet.TOP);
+                    constraints.connect(switchLabel.getId(), ConstraintSet.BOTTOM, stateSwitch.getId(), ConstraintSet.BOTTOM);
+                    constraints.connect(switchLabel.getId(), ConstraintSet.LEFT, stateSwitch.getId(), ConstraintSet.LEFT);
+                    constraints.connect(switchLabel.getId(), ConstraintSet.RIGHT, stateSwitch.getId(), ConstraintSet.RIGHT);
+                }
+
+                constraints.applyTo(stateHeaderLayout);
+            }
+
+            // Set name and type variables
+            final ArrayList<String> stateNames;
+            ArrayList<Boolean> stateTypes = null;
+            if (stateGroup.get(0) instanceof PlayerStateButtonGroup) {
+                stateNames = booleanStateNames;
+                stateTypes = booleanStateTypes;
+            } else {
+                // Create an ArrayList interface to access the universalState names
+                stateNames = new ArrayList<String>() {
+                    @Override
+                    public String set(int index, String element) {
+                        universalStates.get(index).setName(element);
+                        return universalStates.get(index).getName();
+                    }
+
+                    @Override
+                    public int size() {
+                        return universalStates.size();
+                    }
+
+                    @Override
+                    public String get(int index) {
+                        return universalStates.get(index).getName();
+                    }
+                };
+            }
+
+            // Add all current states
+            for (int i = 0; i < stateNames.size(); i++) {
+                // Don't attach to root so it returns us the layout and not the root layout
+                final ConstraintLayout stateLayout = (ConstraintLayout) ((Activity) context).getLayoutInflater().inflate(R.layout.alert_states, alertStateContainer, false);
+
+                // Add the view to the container
+                alertStateContainer.addView(stateLayout);
+
+                // Set the state label
+                final EditText stateLabel = stateLayout.findViewById(R.id.statePromptEditText);
+                stateLabel.setText(stateNames.get(i));
+
+                // Set switch state
+                Switch stateSwitch = stateLayout.findViewById(R.id.statePromptSwitch);
+                if (stateTypes != null) {
+                    stateSwitch.setChecked(booleanStateTypes.get(i));
+                } else {
+                    // Hide switch if not applicable
+                    stateSwitch.setVisibility(View.GONE);
+                }
+
+                // Set label change listener
+                final int index = i;
+                stateLabel.addTextChangedListener(new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+                    }
+
+                    @Override
+                    public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+                    }
+
+                    @Override
+                    public void afterTextChanged(Editable s) {
+                        stateNames.set(index, s.toString());
+                        saveGameState(context);
+                        initGameState(context, true, false);
+                    }
+                });
+
+                // Set type switch listener
+                stateSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
+                        booleanStateTypes.set(index, isChecked);
+                        booleanStateButtonGroups.get(index).setStateType(booleanStateTypes.get(index));
+                        saveGameState(context);
+                        initGameState(context, true, false);
+                    }
+                });
+
+                // Set remove button listener
+                stateLayout.findViewById(R.id.statePromptRemoveButton).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (stateGroup.get(0) instanceof PlayerStateButtonGroup) {
+                            // Decrease the state count by 1
+                            booleanStateCount--;
+
+                            // Remove the button group
+                            booleanStateButtonGroups.remove(index);
+
+                            // Remove the name
+                            booleanStateNames.remove(index);
+
+                            // Remove the type
+                            booleanStateTypes.remove(index);
+                        } else {
+                            universalStates.remove(index);
+                        }
+
+                        // Save states and reload the game state
+                        saveGameState(context);
+                        initGameState(context, true, false);
+
+                        // Remove the state layout from the container
+                        alertStateContainer.removeView(stateLayout);
+
+                        // Remove the header if necessary
+                        if (alertStateContainer.getChildCount() == 1) {
+                            alertStateContainer.removeAllViews();
+                        }
+                    }
+                });
+            }
+        }
+
+        return prompt;
+    }
+
+    public void showPlayerStateEditPrompt(final Context context) {
+        AlertDialog prompt = createStateEditPrompt(context, booleanStateButtonGroups);
+
+        prompt.setButton(DialogInterface.BUTTON_NEUTRAL,"Add new state", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // Add a new button group
                         booleanStateButtonGroups.add(new PlayerStateButtonGroup(booleanStateCount, false));
 
                         // Add a new name
-                        String[] newBooleanStateNames = new String[booleanStateNames.length + 1];
-                        System.arraycopy(booleanStateNames, 0, newBooleanStateNames, 0, booleanStateNames.length);
-                        newBooleanStateNames[booleanStateNames.length] = "X";
-                        booleanStateNames = newBooleanStateNames;
+                        booleanStateNames.add("X");
 
                         // Add new type
                         booleanStateTypes.add(false);
@@ -349,144 +613,33 @@ public class GameState {
                         initGameState(context, true, false);
 
                         // Relaunch the prompt
-                        showStateEditPrompt(context);
+                        showPlayerStateEditPrompt(context);
                     }
-                })
-                .setTitle("Edit States")
-                .setView(alertStateContainer)
-                .create();
+                });
+        prompt.setTitle("Edit Player States");
 
-        // Create headers
-        if (booleanStateCount > 0) {
-            // Don't attach to root so it returns us the layout and not the root layout
-            ConstraintLayout stateHeaderLayout = (ConstraintLayout) ((Activity) context).getLayoutInflater().inflate(R.layout.alert_states, alertStateContainer, false);
+        prompt.show();
+    }
 
-            // Add the view to the container
-            alertStateContainer.addView(stateHeaderLayout);
+    public void showUniversalStateEditPrompt(final Context context) {
+        AlertDialog prompt = createStateEditPrompt(context, universalStates);
 
-            // Set existing views as invisible
-            View stateEditText = stateHeaderLayout.findViewById(R.id.statePromptEditText);
-            View stateSwitch = stateHeaderLayout.findViewById(R.id.statePromptSwitch);
-            View removeButton = stateHeaderLayout.findViewById(R.id.statePromptRemoveButton);
-            stateEditText.setVisibility(View.INVISIBLE);
-            stateSwitch.setVisibility(View.INVISIBLE);
-            removeButton.setVisibility(View.INVISIBLE);
+        prompt.setButton(DialogInterface.BUTTON_NEUTRAL,"Add new state", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (which != DialogInterface.BUTTON_NEUTRAL) return;
 
-            // Create new text views for labels
-            TextView stateLabel = new TextView(context);
-            TextView switchLabel = new TextView(context);
-            TextView removeLabel = new TextView(context);
-            stateLabel.setId(View.generateViewId());
-            switchLabel.setId(View.generateViewId());
-            removeLabel.setId(View.generateViewId());
-            stateLabel.setText("State Label");
-            switchLabel.setText("Single/Multi");
-            removeLabel.setText("Remove");
+                universalStates.add(new UniversalState("Z", universalStates.size() + 1, null));
 
-            // Add the labels to the layout
-            stateHeaderLayout.addView(stateLabel);
-            stateHeaderLayout.addView(switchLabel);
-            stateHeaderLayout.addView(removeLabel);
+                // Save states and reload the game state
+                saveGameState(context);
+                initGameState(context, true, false);
 
-            // Constrain the labels
-            ConstraintSet constraints = new ConstraintSet();
-            constraints.clone(stateHeaderLayout);
-
-            constraints.connect(stateLabel.getId(), ConstraintSet.TOP, stateEditText.getId(), ConstraintSet.TOP);
-            constraints.connect(stateLabel.getId(), ConstraintSet.BOTTOM, stateEditText.getId(), ConstraintSet.BOTTOM);
-            constraints.connect(stateLabel.getId(), ConstraintSet.LEFT, stateEditText.getId(), ConstraintSet.LEFT);
-            constraints.connect(stateLabel.getId(), ConstraintSet.RIGHT, stateEditText.getId(), ConstraintSet.RIGHT);
-
-            constraints.connect(switchLabel.getId(), ConstraintSet.TOP, stateSwitch.getId(), ConstraintSet.TOP);
-            constraints.connect(switchLabel.getId(), ConstraintSet.BOTTOM, stateSwitch.getId(), ConstraintSet.BOTTOM);
-            constraints.connect(switchLabel.getId(), ConstraintSet.LEFT, stateSwitch.getId(), ConstraintSet.LEFT);
-            constraints.connect(switchLabel.getId(), ConstraintSet.RIGHT, stateSwitch.getId(), ConstraintSet.RIGHT);
-
-            constraints.connect(removeLabel.getId(), ConstraintSet.TOP, removeButton.getId(), ConstraintSet.TOP);
-            constraints.connect(removeLabel.getId(), ConstraintSet.BOTTOM, removeButton.getId(), ConstraintSet.BOTTOM);
-            constraints.connect(removeLabel.getId(), ConstraintSet.LEFT, removeButton.getId(), ConstraintSet.LEFT);
-            constraints.connect(removeLabel.getId(), ConstraintSet.RIGHT, removeButton.getId(), ConstraintSet.RIGHT);
-
-            constraints.applyTo(stateHeaderLayout);
-        }
-
-        // Add all current states
-        for (int i = 0; i < booleanStateNames.length; i++) {
-            // Don't attach to root so it returns us the layout and not the root layout
-            final ConstraintLayout stateLayout = (ConstraintLayout) ((Activity) context).getLayoutInflater().inflate(R.layout.alert_states, alertStateContainer, false);
-
-            // Add the view to the container
-            alertStateContainer.addView(stateLayout);
-
-            // Set the state label
-            final EditText stateLabel = stateLayout.findViewById(R.id.statePromptEditText);
-            stateLabel.setText(booleanStateNames[i]);
-
-            // Set switch state
-            Switch stateSwitch = stateLayout.findViewById(R.id.statePromptSwitch);
-            stateSwitch.setChecked(booleanStateButtonGroups.get(i).getStateType());
-
-            // Set label change listener
-            final int index = i;
-            stateLabel.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                    booleanStateNames[index] = s.toString();
-                    saveGameState(context);
-                    initGameState(context, true, false);
-                }
-            });
-
-            // Set type switch listener
-            stateSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
-                    booleanStateTypes.set(index, isChecked);
-                    booleanStateButtonGroups.get(index).setStateType(booleanStateTypes.get(index));
-                    saveGameState(context);
-                    initGameState(context, true, false);
-                }
-            });
-
-            // Set remove button listener
-            stateLayout.findViewById(R.id.statePromptRemoveButton).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // Decrease the state count by 1
-                    booleanStateCount--;
-
-                    // Remove the button group
-                    booleanStateButtonGroups.remove(index);
-
-                    // Remove the name
-                    ArrayList<String> newbooleanStateNames = new ArrayList<>();
-                    for (int i = 0; i < booleanStateNames.length; i++) {
-                        if (i != index) newbooleanStateNames.add(booleanStateNames[i]);
-                    }
-                    booleanStateNames = newbooleanStateNames.toArray(new String[booleanStateNames.length - 1]);
-
-                    // Remove the type
-                    booleanStateTypes.remove(index);
-
-                    // Save states and reload the game state
-                    saveGameState(context);
-                    initGameState(context, true, false);
-
-                    // Remove the state layout from the container
-                    alertStateContainer.removeView(stateLayout);
-                }
-            });
-        }
+                // Relaunch the prompt
+                showUniversalStateEditPrompt(context);
+            }
+        });
+        prompt.setTitle("Edit Game States");
 
         prompt.show();
     }
