@@ -13,8 +13,6 @@ public class Constants {
     public final static String PREF_KEY_GAME_BOOLEAN_STATE_NAME = "pref_game_boolean_state_name_";
     public final static String PREF_KEY_GAME_BOOLEAN_STATE_TYPE = "pref_game_boolean_state_type_";
     public final static String PREF_KEY_GAME_BOOLEAN_STATE_COUNT = "pref_game_boolean_state_count";
-    public final static String PREF_KEY_GAME_MULTI_STATE_COUNT = "pref_game_multi_state_count";
-    public final static String PREF_KEY_GAME_SINGLE_STATE_COUNT = "pref_game_single_state_count";
 
     public final static String PLAYER_BUNDLE_KEY_PLAYER_ID = "player_bundle_key_player_id";
     public final static String PLAYER_BUNDLE_KEY_PLAYER_NAME = "player_bundle_key_player_name";
