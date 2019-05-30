@@ -24,7 +24,6 @@ import net.kberstene.obsscoreoverlay.R;
 import net.kberstene.obsscoreoverlay.activities.MainActivity;
 import net.kberstene.obsscoreoverlay.utilities.Constants;
 import net.kberstene.obsscoreoverlay.utilities.PlayerStateButtonGroup;
-import net.kberstene.obsscoreoverlay.utilities.ServerSettings;
 
 import java.lang.System;
 import java.util.ArrayList;
@@ -206,7 +205,6 @@ public class GameState {
             playerInfo.putInt(Constants.PLAYER_BUNDLE_KEY_STARTING_SCORE, startingScores[i]);
             playerInfo.putBooleanArray(Constants.PLAYER_BUNDLE_KEY_BOOLEAN_STATES, playerBooleanStates);
             playerInfo.putStringArray(Constants.PLAYER_BUNDLE_KEY_STATE_NAMES, booleanStateNames);
-            playerInfo.putString(Constants.PLAYER_BUNDLE_KEY_SERVER_PATH, ServerSettings.getServerPath());
 
             // Create new Player
             Player newPlayer = new Player(playerInfo);

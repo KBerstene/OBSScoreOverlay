@@ -1,13 +1,9 @@
 package net.kberstene.obsscoreoverlay.game_elements;
 
 import android.os.Bundle;
-import android.provider.CalendarContract;
-import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.constraint.ConstraintSet;
-import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -15,19 +11,13 @@ import net.kberstene.obsscoreoverlay.R;
 import net.kberstene.obsscoreoverlay.utilities.Constants;
 import net.kberstene.obsscoreoverlay.utilities.ServerSettings;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.Locale;
-
-import jcifs.smb.NtlmPasswordAuthentication;
-import jcifs.smb.SmbFile;
-import jcifs.smb.SmbFileOutputStream;
 
 public class Player {
     private String name;
     private int score;
     private TextView scoreDisplay, nameDisplay;
-    private String serverPath, fileName;
+    private String fileName;
     private boolean[] booleanStates;
     private String[] stateNames;
 
@@ -37,7 +27,6 @@ public class Player {
         this.booleanStates = playerInfo.getBooleanArray(Constants.PLAYER_BUNDLE_KEY_BOOLEAN_STATES);
         this.stateNames = playerInfo.getStringArray(Constants.PLAYER_BUNDLE_KEY_STATE_NAMES);
         this.fileName = "Player_" + playerInfo.getInt(Constants.PLAYER_BUNDLE_KEY_PLAYER_ID) + "_score.txt";
-        this.setServerPath(playerInfo.getString(Constants.PLAYER_BUNDLE_KEY_SERVER_PATH));
 
         // Set initial score files upon creation
         updateScoreFile();
@@ -112,15 +101,6 @@ public class Player {
         });
     }
 
-    public void setServerPath(@Nullable String serverPath) {
-        if (serverPath != null) {
-            this.serverPath = "smb://" + serverPath;
-
-            if (this.serverPath.charAt(serverPath.length() - 1) != '/')
-                this.serverPath += '/';
-        }
-    }
-
     public String getName() {
         return name;
     }
@@ -175,13 +155,6 @@ public class Player {
     }
 
     private void updateScoreFile() {
-        if (serverPath == null) {
-            if (ServerSettings.getServerPath() == null)
-                return;
-            else
-                this.setServerPath(ServerSettings.getServerPath());
-        }
-
         StringBuilder fileText = new StringBuilder();
 
         fileText.append(score);
@@ -192,30 +165,7 @@ public class Player {
             }
         }
 
-        final byte[] fileBytes = fileText.toString().getBytes();
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    NtlmPasswordAuthentication auth = NtlmPasswordAuthentication.ANONYMOUS;
-                    SmbFile scoreFile = new SmbFile(serverPath + fileName, auth);
-
-                    if (!scoreFile.exists()) scoreFile.createNewFile();
-                    scoreFile.connect();
-
-                    SmbFileOutputStream out = new SmbFileOutputStream(scoreFile, false);
-                    out.write(fileBytes);
-                    out.close();
-                } catch (MalformedURLException mue) {
-                    //MainActivity.makeToast("Bad URL: " + filePath);
-                    Log.w("MALFORMED URL", Log.getStackTraceString(mue));
-                } catch (IOException ioe) {
-                    //MainActivity.makeToast("Could not connect to score file for player " + playerId);
-                    Log.w("IOEXCEPTION", Log.getStackTraceString(ioe));
-                }
-            }
-        }).start();
+        ServerSettings.writeToFile(fileName, fileText.toString().getBytes());
     }
 
 }
