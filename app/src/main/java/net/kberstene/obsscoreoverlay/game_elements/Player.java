@@ -38,6 +38,9 @@ public class Player {
         this.stateNames = playerInfo.getStringArray(Constants.PLAYER_BUNDLE_KEY_STATE_NAMES);
         this.fileName = "Player_" + playerInfo.getInt(Constants.PLAYER_BUNDLE_KEY_PLAYER_ID) + "_score.txt";
         this.setServerPath(playerInfo.getString(Constants.PLAYER_BUNDLE_KEY_SERVER_PATH));
+
+        // Set initial score files upon creation
+        updateScoreFile();
     }
 
     public void setViews(View playerLayout) {
@@ -115,9 +118,6 @@ public class Player {
 
             if (this.serverPath.charAt(serverPath.length() - 1) != '/')
                 this.serverPath += '/';
-
-            // Set initial score files upon creation
-            updateScoreFile();
         }
     }
 
@@ -179,7 +179,7 @@ public class Player {
             if (ServerSettings.getServerPath() == null)
                 return;
             else
-                serverPath = ServerSettings.getServerPath();
+                this.setServerPath(ServerSettings.getServerPath());
         }
 
         StringBuilder fileText = new StringBuilder();
